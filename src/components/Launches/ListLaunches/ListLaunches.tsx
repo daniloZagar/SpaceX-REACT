@@ -6,6 +6,7 @@ export default function ListLaunches() {
   const [apiFetchError, setApiFetchError] = useState<Error | null>(null);
   const [apiData, setApiData] = useState<any[]>([]);
   const [apiLoading, setApiLoading] = useState<boolean>(false);
+  const [end, setEnd] = useState(0);
   const [offset, setOffset] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const limit = 20;
@@ -19,6 +20,10 @@ export default function ListLaunches() {
       const responseData = response.data;
 
       setTotalElements(Number(response.headers["spacex-api-count"]));
+      console.log(responseData.length);
+      if (response.data.length >= 0) {
+        setEnd((prevState) => prevState + responseData.length);
+      }
 
       setApiData((prevData) => [...prevData, ...responseData]);
       setOffset((prevOffset) => prevOffset + limit);
@@ -30,9 +35,7 @@ export default function ListLaunches() {
   }
   function onIntersection(entries: any) {
     const firstEntry = entries[0];
-    console.log("intersection", apiData);
-    console.log("isIntersec", isIntersecting);
-    if (firstEntry.isIntersecting && offset - totalElements < 20) {
+    if (firstEntry.isIntersecting) {
       console.log("prolaziii", apiData.length);
       fetchData(limit, offset);
     }
@@ -43,12 +46,20 @@ export default function ListLaunches() {
     if (observer && containerRef.current) {
       observer.observe(containerRef.current);
     }
+    if (totalElements > 0) {
+      if (end >= totalElements) {
+        observer.unobserve(containerRef.current as Element);
+      }
+    }
     return () => {
       if (observer) {
         observer.disconnect();
       }
     };
   }, [apiData]);
+  if (apiLoading) {
+    return <div>Loading</div>;
+  }
   return (
     <div>
       <div>
