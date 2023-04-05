@@ -1,34 +1,31 @@
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { useEffect, useState } from "react";
 
-export default function useFetchData(
-  url: string,
-  limit: number,
-  offset: number
-) {
+export const useApiData = () => {
   const [apiFetchError, setApiFetchError] = useState<Error | null>(null);
   const [apiData, setApiData] = useState<any[]>([]);
   const [apiLoading, setApiLoading] = useState<boolean>(false);
+  const [totalElements, setTotalElements] = useState(0);
 
-  useEffect(() => {
+  const url = "https://api.spacexdata.com/v3/";
+
+  async function fetchData(limit: number, offset: number) {
     setApiLoading(true);
+    try {
+      const response = await axios.get(
+        `${url}launches?limit=${limit}&offset=${offset}`
+      );
+      const responseData = response.data;
+      setTotalElements(Number(response.headers["spacex-api-count"]));
 
-    async function fetchData() {
-      try {
-        const response = await axios.get(
-          `${url}launches?limit=${limit}&offset=${offset}`
-        );
-        const responseData = response.data;
-        setApiData(responseData);
-      } catch (error: any) {
-        setApiFetchError(error);
-      } finally {
-        setApiLoading(false);
-      }
+      setApiData((prevData) => [...prevData, ...responseData]);
+      console.log(apiData);
+    } catch (error: any) {
+      setApiFetchError(error);
+    } finally {
+      setApiLoading(false);
     }
+  }
 
-    fetchData();
-  }, [url, limit, offset]);
-
-  return { apiData, apiLoading, apiFetchError };
-}
+  return { apiFetchError, apiData, apiLoading, totalElements, fetchData };
+};

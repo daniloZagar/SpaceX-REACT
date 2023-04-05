@@ -1,30 +1,31 @@
-import { useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 
-export default function useOnScreen(ref: any) {
-  const [isIntersecting, setIntersecting] = useState(false);
+export const useIntersectionObserver = (
+  callback: IntersectionObserverCallback,
+  apiDataTotal: any,
+  totalElements: any
+) => {
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIntersecting(entry.isIntersecting);
-       
-      },
-      {
-        rootMargin: "0px",
-        threshold: 1.0,
-      }
-    );
-
-    if (ref.current) {
+    const observer = new IntersectionObserver(callback);
+    if (observer && ref.current) {
       observer.observe(ref.current);
     }
-
+    if (ref.current !== null) {
+      if (apiDataTotal > 0) {
+        console.log(apiDataTotal);
+        if (apiDataTotal >= totalElements) {
+          observer.unobserve(ref.current);
+        }
+      }
+    }
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
+      if (observer) {
+        observer.disconnect();
       }
     };
-  }, [ref]);
+  }, [callback]);
 
-  return isIntersecting;
-}
+  return ref;
+};
